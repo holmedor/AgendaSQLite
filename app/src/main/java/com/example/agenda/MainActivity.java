@@ -1,5 +1,8 @@
 package com.example.agenda;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -49,7 +52,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void Buscar(View view) {
-        String[] archivos = fileList(); //Sólo para MEMORIA INTERNA
+        //Código para recuperar datos de SQLite
+        try {
+            String dato = etArchivo.getText().toString();
+            String fecha = dato.replace('/', '-');
+            DataBaseApp adminSQL = new DataBaseApp(this, "agendaDB", null, 1);
+            SQLiteDatabase bd = adminSQL.getReadableDatabase();
+            String sql = "SELECT fecha, contenido FROM agenda WHERE fecha = '" + fecha + "'";
+            Log.i("BDSQL",sql);
+            Cursor cursor = bd.rawQuery(sql, null);
+            if (cursor.moveToFirst()) {
+                etTexto.setText(cursor.getString(1));
+            } else {
+                Toast.makeText(this, "No existe el registro", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //Código para recuperar datos de memoria microSD
+/*        String[] archivos = fileList(); //Sólo para MEMORIA INTERNA
         String archivo = etArchivo.getText().toString();
         archivo = archivo.replace('/', '-');
         /* Código para recuperar el archivo de la memoria MicroSD
@@ -73,9 +94,9 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "El archivo no existe", Toast.LENGTH_SHORT).show();
                 }
                 } catch(IOException e){
-                Log.i("Agenda", e.toString());
+
+        Log.i("Agenda", e.toString());
         }
-         */
         if (existeFile(archivos, archivo)) {
             try {
                 InputStreamReader file = new InputStreamReader(openFileInput(archivo));
@@ -95,12 +116,30 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "El archivo no existe", Toast.LENGTH_SHORT).show();
         }
+        */
     }
 
     public void Grabar(View view) {
         String archivo = etArchivo.getText().toString();
+        String contenido = etTexto.getText().toString();
+        String fecha = archivo.replace('/', '-');
+        try {
+            DataBaseApp adminDB = new DataBaseApp(this, "agendaDB", null, 1);
+            SQLiteDatabase bd =adminDB.getWritableDatabase();
+            String sql="INSERT INTO agenda (fecha, contenido) VALUES ('"+fecha+"','"+contenido+"')";
+            Log.i("BDSQL",sql);
+            bd.execSQL(sql);
+            Toast.makeText(this,"Registro ingresado", Toast.LENGTH_LONG).show();
+            etArchivo.setText("");
+            etTexto.setText("");
+            bd.close();
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+        /* 13/06/2025: MODIFICADO PARA SQLITE
         archivo = archivo.replace('/', '-')+".txt";
         try {
+ */
 /*   MICROSD
             File tarjeta= Environment.getExternalStorageDirectory();
             File file=new File(tarjeta.getAbsolutePath(),archivo);
@@ -110,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
             osw.close();
     MEMO INTERNA
 */
+        /*
             OutputStreamWriter file = new OutputStreamWriter(openFileOutput(archivo, MODE_PRIVATE));
             file.write(etTexto.getText().toString());
             file.flush();
@@ -118,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
             Log.i("Agenda", e.toString());
         }
         Toast.makeText(this, "Datos grabados", Toast.LENGTH_SHORT).show();
+        */
         this.LimpiarTextos();
     }
 /*        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
